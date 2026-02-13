@@ -262,6 +262,15 @@
             android:src="@drawable/ic_settings" />
 
         <ImageView
+            android:id="@+id/fabVoice"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_margin="8dp"
+            android:contentDescription="@string/voice_command"
+            android:elevation="6dp"
+            android:src="@drawable/ic_mic" />
+
+        <ImageView
             android:id="@+id/fabAction"
             android:layout_width="26dp"
             android:layout_height="26dp"
@@ -271,5 +280,13 @@
             android:src="@drawable/app_launcher" />
 
     </LinearLayout>
+
+    <!-- Voice overlay (Compose) -->
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/voiceOverlayCompose"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:elevation="8dp" />
 
 </FrameLayout>

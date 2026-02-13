@@ -2835,6 +2835,96 @@ class SettingsFragment : BaseFragment() {
                         }
                     )
 
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Voice Control
+                    SettingsTitle(
+                        text = getLocalizedString(R.string.voice_control),
+                        fontSize = titleFontSize,
+                    )
+
+                    var toggledVoiceEnabled by remember { mutableStateOf(prefs.voiceEnabled) }
+                    var toggledVoiceCloud by remember { mutableStateOf(prefs.voiceCloudEnabled) }
+                    var toggledVoiceTts by remember { mutableStateOf(prefs.voiceTtsEnabled) }
+                    var toggledVoiceHaptic by remember { mutableStateOf(prefs.voiceHapticEnabled) }
+
+                    SettingsSwitch(
+                        text = getLocalizedString(R.string.voice_enable),
+                        fontSize = titleFontSize,
+                        defaultState = toggledVoiceEnabled,
+                        onCheckedChange = {
+                            toggledVoiceEnabled = !prefs.voiceEnabled
+                            prefs.voiceEnabled = toggledVoiceEnabled
+                        }
+                    )
+
+                    if (toggledVoiceEnabled) {
+                        SettingsSwitch(
+                            text = getLocalizedString(R.string.voice_cloud_ai),
+                            fontSize = titleFontSize,
+                            defaultState = toggledVoiceCloud,
+                            onCheckedChange = {
+                                toggledVoiceCloud = !prefs.voiceCloudEnabled
+                                prefs.voiceCloudEnabled = toggledVoiceCloud
+                            }
+                        )
+
+                        if (toggledVoiceCloud) {
+                            var apiKeyText by remember {
+                                mutableStateOf(
+                                    com.github.codeworkscreativehub.mlauncher.voice.nlu.CloudLLMNlu
+                                        .getApiKey(context)?.let { "••••••${it.takeLast(4)}" } ?: ""
+                                )
+                            }
+
+                            SettingsSelect(
+                                title = getLocalizedString(R.string.voice_api_key),
+                                option = apiKeyText.ifEmpty { getLocalizedString(R.string.voice_api_key_hint) },
+                                fontSize = titleFontSize,
+                                onClick = {
+                                    val editText = android.widget.EditText(requireContext()).apply {
+                                        hint = getLocalizedString(R.string.voice_api_key_hint)
+                                        inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                                        setPadding(48, 32, 48, 32)
+                                    }
+                                    MaterialAlertDialogBuilder(requireContext())
+                                        .setTitle(getLocalizedString(R.string.voice_api_key))
+                                        .setView(editText)
+                                        .setPositiveButton(getLocalizedString(R.string.okay)) { _, _ ->
+                                            val key = editText.text.toString().trim()
+                                            if (key.isNotBlank()) {
+                                                com.github.codeworkscreativehub.mlauncher.voice.nlu.CloudLLMNlu
+                                                    .saveApiKey(context, key)
+                                                apiKeyText = "••••••${key.takeLast(4)}"
+                                            }
+                                        }
+                                        .setNegativeButton(android.R.string.cancel, null)
+                                        .show()
+                                }
+                            )
+                        }
+
+                        SettingsSwitch(
+                            text = getLocalizedString(R.string.voice_tts),
+                            fontSize = titleFontSize,
+                            defaultState = toggledVoiceTts,
+                            onCheckedChange = {
+                                toggledVoiceTts = !prefs.voiceTtsEnabled
+                                prefs.voiceTtsEnabled = toggledVoiceTts
+                            }
+                        )
+
+                        SettingsSwitch(
+                            text = getLocalizedString(R.string.voice_haptic),
+                            fontSize = titleFontSize,
+                            defaultState = toggledVoiceHaptic,
+                            onCheckedChange = {
+                                toggledVoiceHaptic = !prefs.voiceHapticEnabled
+                                prefs.voiceHapticEnabled = toggledVoiceHaptic
+                            }
+                        )
+                    }
+
                     if (isGestureNavigationEnabled(context)) {
                         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.bottom_margin_gesture_nav)))
                     } else {

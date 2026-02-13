@@ -331,6 +331,7 @@ object Constants {
         PreviousPage,
         NextPage,
         RestartApp,
+        VoiceCommand,
         Disabled;
 
         fun getString(): String {
@@ -350,6 +351,7 @@ object Constants {
                 PreviousPage -> getLocalizedString(R.string.previous_page)
                 NextPage -> getLocalizedString(R.string.next_page)
                 RestartApp -> getLocalizedString(R.string.restart_launcher)
+                VoiceCommand -> getLocalizedString(R.string.voice_command)
                 Disabled -> getLocalizedString(R.string.disabled)
             }
         }
@@ -372,6 +374,7 @@ object Constants {
                 PreviousPage -> getLocalizedString(R.string.previous_page)
                 NextPage -> getLocalizedString(R.string.next_page)
                 RestartApp -> getLocalizedString(R.string.restart_launcher)
+                VoiceCommand -> getLocalizedString(R.string.voice_command)
                 Disabled -> getLocalizedString(R.string.disabled)
             }
         }

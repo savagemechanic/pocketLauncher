@@ -191,6 +191,9 @@ dependencies {
 
     implementation(libs.biometric.ktx)
 
+    implementation(libs.okhttp)
+    implementation(libs.security.crypto)
+
     implementation(libs.moshi)
     implementation(libs.moshi.ktx)
     ksp(libs.moshi.codegen)

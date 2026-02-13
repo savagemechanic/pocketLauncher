@@ -920,6 +920,22 @@ class Prefs(val context: Context) {
     }
 
 
+    var voiceEnabled: Boolean
+        get() = getSetting(VOICE_ENABLED, true)
+        set(value) = prefsNormal.edit { putBoolean(VOICE_ENABLED, value) }
+
+    var voiceCloudEnabled: Boolean
+        get() = getSetting(VOICE_CLOUD_ENABLED, false)
+        set(value) = prefsNormal.edit { putBoolean(VOICE_CLOUD_ENABLED, value) }
+
+    var voiceTtsEnabled: Boolean
+        get() = getSetting(VOICE_TTS_ENABLED, true)
+        set(value) = prefsNormal.edit { putBoolean(VOICE_TTS_ENABLED, value) }
+
+    var voiceHapticEnabled: Boolean
+        get() = getSetting(VOICE_HAPTIC_ENABLED, true)
+        set(value) = prefsNormal.edit { putBoolean(VOICE_HAPTIC_ENABLED, value) }
+
     fun saveSettings(category: String, priority: String) {
         prefsNormal.edit {
             putString(NOTES_CATEGORY, category)

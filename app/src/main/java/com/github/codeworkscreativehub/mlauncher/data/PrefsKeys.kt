@@ -168,6 +168,12 @@ internal const val NOTES_MESSAGES = "NOTES_MESSAGES"
 internal const val NOTES_CATEGORY = "NOTES_CATEGORY"
 internal const val NOTES_PRIORITY = "NOTES_PRIORITY"
 
+// Voice
+internal const val VOICE_ENABLED = "VOICE_ENABLED"
+internal const val VOICE_CLOUD_ENABLED = "VOICE_CLOUD_ENABLED"
+internal const val VOICE_TTS_ENABLED = "VOICE_TTS_ENABLED"
+internal const val VOICE_HAPTIC_ENABLED = "VOICE_HAPTIC_ENABLED"
+
 // Onboarding / Expert options
 internal const val ONBOARDING_COMPLETED = "ONBOARDING_COMPLETED"
 internal const val EXPERT_OPTIONS = "EXPERT_OPTIONS"

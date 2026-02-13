@@ -143,6 +143,13 @@ class AppDrawerFragment : BaseFragment() {
             searchTextView.text = letterToChar.toString()
         }
 
+        // Handle voice query from voice command
+        val voiceQuery = arguments?.getString("voiceQuery")
+        if (!voiceQuery.isNullOrBlank()) {
+            val searchTextView = binding.search.findViewById<TextView>(R.id.search_src_text)
+            searchTextView.text = voiceQuery
+        }
+
         val backgroundColor = getHexForOpacity(prefs)
         binding.mainLayout.setBackgroundColor(backgroundColor)
 

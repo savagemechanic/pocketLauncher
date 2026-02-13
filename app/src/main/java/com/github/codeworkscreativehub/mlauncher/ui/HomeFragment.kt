@@ -90,6 +90,10 @@ import com.github.codeworkscreativehub.mlauncher.listener.NotificationDotManager
 import com.github.codeworkscreativehub.mlauncher.services.ActionService
 import com.github.codeworkscreativehub.mlauncher.ui.components.DialogManager
 import com.github.codeworkscreativehub.mlauncher.ui.widgets.WidgetActivity
+import com.github.codeworkscreativehub.mlauncher.voice.VoiceServiceImpl
+import com.github.codeworkscreativehub.mlauncher.voice.feedback.VoiceOverlay
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ViewCompositionStrategy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -108,6 +112,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private var longPressToSelectApp: Int = 0
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
+
+    private var voiceService: VoiceServiceImpl? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -158,6 +164,21 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
         // Update view appearance/settings based on prefs
         updateUIFromPreferences()
+
+        // Setup voice overlay Compose view
+        binding.voiceOverlayCompose.apply {
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                voiceService?.let { service ->
+                    val accentColor = Color(prefs.appColor)
+                    VoiceOverlay(
+                        overlayStateFlow = service.overlayState,
+                        accentColor = accentColor,
+                        onDismiss = { service.cancel() }
+                    )
+                }
+            }
+        }
     }
 
     override fun onStart() {
@@ -207,6 +228,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     override fun onStop() {
         super.onStop()
+        voiceService?.destroy()
+        voiceService = null
 
         context?.let { ctx ->
             try {
@@ -267,8 +290,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             totalScreenTime.setTextColor(prefs.appColor)
             setDefaultLauncher.setTextColor(prefs.appColor)
 
-            val fabList = listOf(fabPhone, fabMessages, fabCamera, fabPhotos, fabBrowser, fabSettings, fabAction)
-            val fabFlags = prefs.getMenuFlags("HOME_BUTTON_FLAGS", "0000011") // Might return list of wrong size
+            val fabList = listOf(fabPhone, fabMessages, fabCamera, fabPhotos, fabBrowser, fabSettings, fabVoice, fabAction)
+            val fabFlags = prefs.getMenuFlags("HOME_BUTTON_FLAGS", "00000011") // Might return list of wrong size
             val colors = ColorManager.getRandomHueColors(prefs.shortcutIconsColor, fabList.size)
 
             for (i in fabList.indices) {
@@ -391,6 +414,11 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 CrashHandler.logUserAction("fabSettings Clicked")
             }
 
+            R.id.fabVoice -> {
+                startVoiceSession()
+                CrashHandler.logUserAction("fabVoice Clicked")
+            }
+
             R.id.fabAction -> {
                 when (val action = prefs.clickFloatingAction) {
                     Action.OpenApp -> openFabActionApp()
@@ -452,6 +480,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             fabCamera.setOnClickListener(this@HomeFragment)
             fabPhotos.setOnClickListener(this@HomeFragment)
             fabBrowser.setOnClickListener(this@HomeFragment)
+            fabVoice.setOnClickListener(this@HomeFragment)
             fabAction.setOnClickListener(this@HomeFragment)
             fabSettings.setOnClickListener(this@HomeFragment)
         }
@@ -737,6 +766,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             Action.NextPage -> navigateToNextPage()
             Action.RestartApp -> AppReloader.restartApp(requireContext())
             Action.ShowWidgetPage -> showWidgetPage()
+            Action.VoiceCommand -> startVoiceSession()
             Action.OpenApp -> {
                 // this should be handled in the respective onSwipe[Up,Down,Right,Left] functions
             }
@@ -746,6 +776,27 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             }
 
         }
+    }
+
+    private fun startVoiceSession() {
+        val ctx = context ?: return
+
+        if (voiceService == null) {
+            voiceService = VoiceServiceImpl(ctx, viewModel, this, prefs)
+            // Recompose to pick up the new service
+            binding.voiceOverlayCompose.setContent {
+                voiceService?.let { service ->
+                    val accentColor = Color(prefs.appColor)
+                    VoiceOverlay(
+                        overlayStateFlow = service.overlayState,
+                        accentColor = accentColor,
+                        onDismiss = { service.cancel() }
+                    )
+                }
+            }
+        }
+
+        voiceService?.startVoiceCommand()
     }
 
     private fun showWidgetPage() {
