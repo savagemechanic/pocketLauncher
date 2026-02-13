@@ -128,6 +128,10 @@ extensions.configure<ApplicationExtension>("android") {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
     lint {
         abortOnError = false
     }

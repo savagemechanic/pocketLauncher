@@ -23,11 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Mic
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -128,13 +124,10 @@ private fun ListeningContent(state: VoiceOverlayState.Listening, accentColor: Co
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            imageVector = Icons.Filled.Mic,
-            contentDescription = "Listening",
-            tint = accentColor,
-            modifier = Modifier
-                .size(32.dp)
-                .scale(scale)
+        Text(
+            text = "\uD83C\uDF99",
+            fontSize = 28.sp,
+            modifier = Modifier.scale(scale)
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
@@ -180,11 +173,11 @@ private fun SuccessContent(accentColor: Color) {
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(
-            imageVector = Icons.Filled.Check,
-            contentDescription = "Success",
-            tint = accentColor,
-            modifier = Modifier.size(24.dp)
+        Text(
+            text = "✓",
+            color = accentColor,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.width(8.dp))
         Text(
