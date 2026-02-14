@@ -78,12 +78,9 @@ extensions.configure<ApplicationExtension>("android") {
             println("Using keystore: ${keystoreFile.absolutePath} (${keystoreFile.length()} bytes)")
 
             storeFile = keystoreFile
-            storePassword = System.getenv("KEY_STORE_PASSWORD")
-                ?: error("KEY_STORE_PASSWORD not set")
-            keyAlias = System.getenv("KEY_ALIAS")
-                ?: error("KEY_ALIAS not set")
-            keyPassword = System.getenv("KEY_PASSWORD")
-                ?: error("KEY_PASSWORD not set")
+            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: ""
+            keyAlias = System.getenv("KEY_ALIAS") ?: ""
+            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
         }
     }
 
@@ -93,7 +90,7 @@ extensions.configure<ApplicationExtension>("android") {
             isMinifyEnabled = false
             isShrinkResources = false
             applicationIdSuffix = ".debug"
-            signingConfig = signingConfigs["release"]
+            signingConfig = signingConfigs["debug"]
 
             resValue("string", "app_version", baseVersionCode.toString())
             resValue("string", "app_name", "Multi Launcher Debug")

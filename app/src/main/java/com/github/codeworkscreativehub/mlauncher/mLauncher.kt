@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import com.github.codeworkscreativehub.common.CrashHandler
 import com.github.codeworkscreativehub.mlauncher.data.Constants
 import com.github.codeworkscreativehub.mlauncher.data.Prefs
+import com.github.codeworkscreativehub.mlauncher.data.RepositoryProvider
 import com.github.codeworkscreativehub.mlauncher.helper.FontManager
 import com.github.codeworkscreativehub.mlauncher.helper.IconCacheTarget
 import com.github.codeworkscreativehub.mlauncher.helper.IconPackHelper
@@ -25,6 +26,7 @@ class Mlauncher : Application() {
             if (appContext != null) return // already initialized
             appContext = context
 
+            RepositoryProvider.initialize(context)
             val prefs = Prefs(context)
 
             // 🌓 Set theme mode once at app startup
