@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Guardrails
+
+**Read [`docs/guardrails.md`](docs/guardrails.md) before making any code change.** It is the authoritative guide for code quality, architecture, and Kotlin idioms in this project. All code must conform to the guardrails — no exceptions.
+
 ## Project Overview
 
 mLauncher is a minimal Android launcher forked from Olauncher. It's a fully open-source (GPL-3.0) privacy-focused home screen replacement with gesture support, app renaming, custom icon packs, widgets, and biometric-protected settings.
