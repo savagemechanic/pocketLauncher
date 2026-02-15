@@ -1,28 +1,27 @@
 # Guardrails
 
-> This document is the constant contextual guide for all development in pocketLauncher.
-> Every code change, refactor, feature, and review must pass through these guardrails.
+> The authoritative guide for all development in pocketLauncher.
+> Every code change, feature, and review must conform to these guardrails.
 
 ---
 
-## 1. Idiomatic Kotlin — No Exceptions
+## 1. Idiomatic Kotlin
 
 Write Kotlin the way the language designers intended. Every construct has a purpose; use the right one.
 
 ### Data & State
 - **`data class`** for value objects. Never use a regular class when you need `equals`, `hashCode`, or `copy`.
-- **`sealed class` / `sealed interface`** for representing finite state machines, UI states, and result types. Prefer `sealed interface` when you don't need shared state.
-- **`value class`** (inline) for type-safe wrappers around primitives (`AppPackageName`, `SearchQuery`).
+- **`sealed class` / `sealed interface`** for finite state machines, UI states, and result types. Prefer `sealed interface` when you don't need shared state.
+- **`value class`** (inline) for type-safe wrappers around primitives.
 - **`object`** for true singletons. Never hand-roll a singleton pattern.
 - **`enum class`** for fixed, exhaustive sets. Use `when` exhaustively — no `else` branch on enums or sealed types.
 
 ### Null Safety
 - Leverage the type system. `String` means non-null; `String?` means nullable. Never use `!!` except in tests.
 - Prefer `?.let {}`, `?:` (Elvis), and `?.run {}` over null checks with `if`.
-- Design APIs to minimize nullability. Push null handling to the boundary, not through the core.
+- Design APIs to minimize nullability. Push null handling to boundaries, not through the core.
 
 ### Scope Functions
-Use them idiomatically:
 - `let` — transform nullable or scoped values
 - `apply` — configure an object during construction
 - `run` — execute a block on an object, return result
@@ -36,53 +35,59 @@ Use them idiomatically:
 
 ### Coroutines
 - **Structured concurrency always.** Every coroutine must have a well-defined scope (`viewModelScope`, `lifecycleScope`, or a supervised scope you own).
-- Use `Flow` for reactive streams. Prefer `StateFlow` and `SharedFlow` over `LiveData` in new code.
+- `StateFlow` and `SharedFlow` for all reactive streams. No new `LiveData`.
 - `withContext(Dispatchers.IO)` for disk/network. Never block the main thread.
 - Handle cancellation properly — check `isActive` in long loops, use `ensureActive()`.
 
 ### Extension Functions
 - Use them to add behavior where inheritance is wrong.
-- Keep them close to their usage. Don't create a `StringExtensions.kt` grab bag — put extensions in the file that uses them, or in a clearly scoped utility.
+- Keep them close to their usage. No grab-bag `XxxExtensions.kt` files — put extensions in the file that uses them, or in a clearly scoped utility.
 
 ---
 
-## 2. Clean Architecture
-
-Every layer has a job. Nothing crosses boundaries without going through the proper interface.
+## 2. Architecture
 
 ```
-UI (Fragments/Compose) → ViewModel → UseCase/Repository → DataSource
+UI (Compose / Fragments) → ViewModel → Repository → DataSource
+         ↑                                    ↑
+     domain models ←──────────────────── domain layer
 ```
 
 ### Layer Responsibilities
 
 | Layer | Owns | Depends On | Never Touches |
 |-------|------|------------|---------------|
-| **UI** | Views, Compose screens, navigation | ViewModel only | Repositories, database, network |
-| **ViewModel** | UI state, user intent mapping | UseCases / Repositories | Context, Views, Fragments |
-| **Domain** | Business logic, models | Nothing (pure Kotlin) | Android framework, database |
-| **Data** | Persistence, caching, API calls | Domain interfaces | UI, ViewModel |
+| **UI** | Compose screens, Fragments, navigation | ViewModel only | Repositories, database, network |
+| **ViewModel** | UI state, user intent mapping | Repositories | Context, Views, Fragments |
+| **Domain** | Business logic, models, interfaces | Nothing (pure Kotlin) | Android framework, database |
+| **Data** | Persistence, caching, API calls, `DataSource` impls | Domain interfaces | UI, ViewModel |
 
 ### Dependency Rule
-Dependencies point **inward**. The domain layer has zero Android imports. If you need `Context` in business logic, you've made a design mistake — inject an interface instead.
+Dependencies point **inward**. The domain layer has zero Android imports. If you need `Context` in business logic, inject an interface instead.
 
 ### Repository Pattern
-- One repository per data domain (`AppRepository`, `SettingsRepository`, `WidgetRepository`).
+- One repository per data domain (`AppRepository`, `SettingsRepository`, `ContactRepository`, `ThemeRepository`, `WidgetRepository`).
 - Repository is the **single source of truth**. It decides whether to read from cache, database, or network.
-- Expose `Flow<T>` from repositories, not raw data types.
+- Expose `Flow<T>` from repositories.
 
 ### ViewModel Discipline
-- ViewModels expose `StateFlow<UiState>` where `UiState` is a sealed interface or data class.
-- No `MutableLiveData` exposed publicly. Use `private val _state` / `val state: StateFlow<T> = _state.asStateFlow()`.
+- One focused ViewModel per screen or feature (`HomeViewModel`, `AppListViewModel`, `SettingsViewModel`, `ContactListViewModel`).
+- Expose `StateFlow<UiState>` where `UiState` is a sealed interface or data class.
+- Use `private val _state` / `val state: StateFlow<T> = _state.asStateFlow()` — never expose mutables.
 - ViewModels never hold references to Views, Fragments, or Context.
-- One public function per user action. Name it after the intent: `onSearchQueryChanged()`, `onAppSelected()`, `onSwipeGesture()`.
+- One public function per user action. Name it after the intent: `onSearchQueryChanged()`, `onAppSelected()`.
+
+### DataSource Pattern
+- `PreferencesDataSource` interface defines the storage contract.
+- Concrete implementations (e.g., `SharedPrefsDataSource`) live in the data layer.
+- Serialization is handled by dedicated serializers (e.g., `MoshiSerializer`), decoupled from storage.
 
 ---
 
-## 3. SOLID Principles — Applied, Not Academic
+## 3. SOLID Principles
 
 ### Single Responsibility
-If you can't describe what a class does in one sentence without "and", split it. `SettingsFragment` managing 157KB of UI is a known debt — new settings go into dedicated sub-fragments or Compose screens.
+If you can't describe what a class does in one sentence without "and", split it.
 
 ### Open/Closed
 Extend behavior through sealed types and strategy patterns, not by modifying existing classes. Adding a new gesture? Add a case to the sealed class, not an `if` branch.
@@ -91,10 +96,10 @@ Extend behavior through sealed types and strategy patterns, not by modifying exi
 Every subtype must be usable wherever its parent type is expected. If your override throws `UnsupportedOperationException`, the design is wrong.
 
 ### Interface Segregation
-Small, focused interfaces. `AppRepository` shouldn't force implementors to handle widgets. Separate concerns into separate contracts.
+Small, focused interfaces. A repository for apps shouldn't force implementors to handle widgets.
 
 ### Dependency Inversion
-Depend on abstractions. ViewModels take repository interfaces, not concrete implementations. This is what makes testing possible.
+Depend on abstractions. ViewModels take repository interfaces, not concrete implementations.
 
 ---
 
@@ -124,7 +129,7 @@ companion object {
 
 // Packages: lowercase, no underscores
 com.github.codeworkscreativehub.mlauncher.data.repository
-com.github.codeworkscreativehub.mlauncher.ui.drawer
+com.github.codeworkscreativehub.mlauncher.ui.home
 ```
 
 ### Boolean Naming
@@ -139,7 +144,6 @@ Prefix with `on`: `onAppSelected`, `onSwipeDetected`, `onVoiceCommandReceived`.
 
 ### Use the Type System
 ```kotlin
-// Prefer sealed results over exceptions for expected failures
 sealed interface AppLaunchResult {
     data class Success(val app: AppModel) : AppLaunchResult
     data class NotFound(val query: String) : AppLaunchResult
@@ -164,7 +168,6 @@ sealed interface AppLaunchResult {
 
 ### How to Test
 ```kotlin
-// Given-When-Then structure
 @Test
 fun `search returns fuzzy matches when exact match not found`() {
     // Given
@@ -185,17 +188,18 @@ fun `search returns fuzzy matches when exact match not found`() {
 
 ---
 
-## 7. Android-Specific Guardrails
+## 7. Android-Specific
 
 ### Fragment Lifecycle
 - Observe data in `onViewCreated`, not `onCreateView`.
-- Use `viewLifecycleOwner` for LiveData/Flow collection, never `this`.
+- Use `viewLifecycleOwner` for Flow collection, never `this`.
 - Access views only between `onViewCreated` and `onDestroyView`.
 
-### Compose Integration
-- New UI should prefer Compose. Existing Views are maintained but not extended.
+### Compose
+- All new UI is Compose. Existing View-based screens are maintained but not extended.
 - Compose screens use `collectAsStateWithLifecycle()` for Flow collection.
 - No business logic in `@Composable` functions. They render state, nothing more.
+- Composables that need `RowScope` or `ColumnScope` modifiers (e.g., `Modifier.weight()`) must declare the appropriate scope as a receiver.
 
 ### Resource Management
 - Strings in `strings.xml`, never hardcoded. This is a launcher — it must be localizable.
@@ -218,11 +222,10 @@ type(scope): concise description
 
 feat(voice): add wake word detection
 fix(drawer): prevent crash on empty app list
-refactor(settings): extract biometric logic to dedicated fragment
+refactor(settings): extract biometric logic to dedicated screen
 ```
 
 ### PR Checklist
-Before merging, every PR must satisfy:
 - [ ] Compiles without warnings (treat warnings as errors in spirit)
 - [ ] No `!!` outside of test code
 - [ ] New public APIs have KDoc
@@ -232,18 +235,7 @@ Before merging, every PR must satisfy:
 
 ---
 
-## 9. Architectural Debt Acknowledgment
-
-The following are known violations of these guardrails that exist in the current codebase. They are not to be extended — only reduced:
-
-- `MainViewModel` is oversized and handles too many concerns. New features must not add to it; extract dedicated ViewModels.
-- `SettingsFragment` at 157KB is a monolith. New settings screens use Compose.
-- Some `LiveData` usage remains. New reactive streams use `StateFlow`/`SharedFlow`.
-- `Prefs` couples serialization with storage. New preferences go through a repository.
-
----
-
-## 10. The Prime Directive
+## 9. The Prime Directive
 
 > Every line of code in this project should look like it was written by one senior Kotlin developer who cares deeply about clarity, correctness, and the user holding their phone.
 
